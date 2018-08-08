@@ -5,11 +5,15 @@ components:
   saveUser:
     type: azure-functions
     inputs:
-      name: func-${self.instanceId}
+      name: func-jehollan6820
       runtime: nodejs8
       subscriptionId: 80d4fe69-c95b-4dd2-a938-9250f1c8ab03
-      resourceGroup: jehollan-deletemecomponent2
       tenant: ${env.AZURE_TENANT}
       clientId: ${env.AZURE_CLIENT_ID}
       clientSecret: ${env.AZURE_CLIENT_SECRET}
       root: ${self.path}/code
+      storageAccountName: serverlessdep2039
+      resourceGroup: jehollan-deleteme4
+      appServicePlanName: serverless-deploy
+      location: westus
+

@@ -12,7 +12,10 @@ async function createFunction(
     tenant,
     clientId,
     clientSecret,
-    root /*, runtime, description, env */
+    root,
+    storageAccountName,
+    appServicePlanName,
+    location /*, runtime, description, env */
   },
   context
 ) {
@@ -23,11 +26,7 @@ async function createFunction(
   const resourceClient = new ResourceManagementClient(credentials, subscriptionId)
   const storageClient = new StorageManagementClient(credentials, subscriptionId)
 
-  const storageAccountName = 'serverlessstorage1222'
-  const appServicePlanName = 'serverless-westus'
-  const functionLocation = 'westus'
-
-  var groupParameters = { location: functionLocation, tags: { source: 'serverless-framework' } }
+  var groupParameters = { location: location, tags: { source: 'serverless-framework' } }
 
   context.log('Creating resource group: ' + resourceGroup)
 
@@ -39,7 +38,7 @@ async function createFunction(
       computeMode: 'Dynamic',
       name: appServicePlanName
     },
-    location: functionLocation
+    location: location
   }
 
   context.log(`Creating hosting plan: ${appServicePlanName}`)
@@ -55,7 +54,7 @@ async function createFunction(
 
   context.log(`Creating storage account: ${storageAccountName}`)
   var storageParameters = {
-    location: functionLocation,
+    location: location,
     sku: {
       name: 'Standard_LRS'
     }
@@ -77,29 +76,42 @@ async function createFunction(
   )
 
   let storageKey = storageKeyResult.keys[0].value
+  let storageConnectionString = `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
 
   context.log(`Creating function app: ${name}`)
 
   var functionAppSettings = [
     {
       name: 'AzureWebJobsStorage',
-      value: `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
+      value: storageConnectionString
     },
     {
       name: 'FUNCTIONS_EXTENSION_VERSION',
       value: 'beta'
     },
     {
+      name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING',
+      value: storageConnectionString
+    },
+    {
+      name: 'WEBSITE_CONTENTSHARE',
+      value: name.toLowerCase()
+    },
+    {
       name: 'WEBSITE_NODE_DEFAULT_VERSION',
-      value: '8.11.0' /* this would correspond to node runtime specified */
+      value: '8.11.1' /* this would correspond to node runtime specified */
     },
     {
       name: 'WEBSITE_RUN_FROM_ZIP',
       value: '1'
+    },
+    {
+      name: 'AzureWebJobsDashboard',
+      value: ''
     }
   ]
   var functionAppParameters = {
-    location: functionLocation,
+    location: location,
     kind: 'functionapp',
     properties: {
       serverFarmId: appServicePlanName,

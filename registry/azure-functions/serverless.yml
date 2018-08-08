@@ -64,3 +64,15 @@ inputTypes:
     type: string
     displayName: Azure Tenant
     description: The Azure Tenant
+  storageAccountName:
+    type: string
+    displayName: Azure storage account name
+    description: The storage account which will host the function code
+  appServicePlanName:
+    type: string
+    displayName: App Service Plan Name
+    description: The consumption App Service Plan
+  location:
+    type: string
+    displayName: Azure Function location
+    description: The region to deploy the function app
