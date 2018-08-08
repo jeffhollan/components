@@ -16,8 +16,6 @@ async function createFunction(
   },
   context
 ) {
-  context.log('Authenticating and creating clients...')
-
   const path = root || context.projectPath
   const pkg = await pack(path)
 
@@ -34,8 +32,6 @@ async function createFunction(
   context.log('Creating resource group: ' + resourceGroup)
 
   await resourceClient.resourceGroups.createOrUpdate(resourceGroup, groupParameters)
-
-  context.log('Resource group created')
 
   var planParameters = {
     properties: {
@@ -79,14 +75,15 @@ async function createFunction(
     resourceGroup,
     storageAccountName
   )
-  let storageKey = storageKeyResult.keys[0]
+
+  let storageKey = storageKeyResult.keys[0].value
 
   context.log(`Creating function app: ${name}`)
 
   var functionAppSettings = [
     {
       name: 'AzureWebJobsStorage',
-      value: `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey}`
+      value: `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
     },
     {
       name: 'FUNCTIONS_EXTENSION_VERSION',
@@ -95,6 +92,10 @@ async function createFunction(
     {
       name: 'WEBSITE_NODE_DEFAULT_VERSION',
       value: '8.11.0' /* this would correspond to node runtime specified */
+    },
+    {
+      name: 'WEBSITE_RUN_FROM_ZIP',
+      value: '1'
     }
   ]
   var functionAppParameters = {
@@ -122,16 +123,16 @@ async function createFunction(
 
   let publishingCredentials = await resourceClient.sendRequest(options)
 
-  context.log(JSON.stringify(publishingCredentials))
+  context.log(`Publishing function code...`)
 
-  let zipResponse = await axios.post(`https://${name}.scm.azurewebsites.net/api/zipdeploy`, pkg, {
+  await axios.post(`https://${name}.scm.azurewebsites.net/api/zipdeploy`, pkg, {
     auth: {
       username: publishingCredentials.properties.publishingUserName,
       password: publishingCredentials.properties.publishingPassword
     }
   })
 
-  context.log(JSON.stringify(zipResponse))
+  context.log(`Function published.`)
 
   return {}
 }
@@ -147,10 +148,8 @@ async function deploy(inputs, context) {
 
   // TODO: do the decision tree on create or update (if necessary)
 
-  context.log('about to call createFunction')
   let outputs = await createFunction(inputs, context)
 
-  context.log('about to save state')
   context.saveState({ ...inputs, ...outputs })
 }
 
