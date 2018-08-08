@@ -15,7 +15,9 @@ async function createFunction(
     root,
     storageAccountName,
     appServicePlanName,
-    location /*, runtime, description, env */
+    location,
+    runtime,
+    env
   },
   context
 ) {
@@ -80,36 +82,13 @@ async function createFunction(
 
   context.log(`Creating function app: ${name}`)
 
-  var functionAppSettings = [
-    {
-      name: 'AzureWebJobsStorage',
-      value: storageConnectionString
-    },
-    {
-      name: 'FUNCTIONS_EXTENSION_VERSION',
-      value: 'beta'
-    },
-    {
-      name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING',
-      value: storageConnectionString
-    },
-    {
-      name: 'WEBSITE_CONTENTSHARE',
-      value: name.toLowerCase()
-    },
-    {
-      name: 'WEBSITE_NODE_DEFAULT_VERSION',
-      value: '8.11.1' /* this would correspond to node runtime specified */
-    },
-    {
-      name: 'WEBSITE_RUN_FROM_ZIP',
-      value: '1'
-    },
-    {
-      name: 'AzureWebJobsDashboard',
-      value: ''
-    }
-  ]
+  var functionAppSettings = generateAppSettings({
+    name,
+    storageConnectionString,
+    nodeVersion: runtime == 'nodejs10' ? '10.7.0' : '8.11.1',
+    env
+  })
+
   var functionAppParameters = {
     location: location,
     kind: 'functionapp',
@@ -146,7 +125,9 @@ async function createFunction(
 
   context.log(`Function published.`)
 
-  return {}
+  return {
+    functionId: `/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/providers/Microsoft.Web/sites/${name}`
+  }
 }
 
 async function deploy(inputs, context) {
@@ -172,4 +153,37 @@ function remove(inputs, context) {
 module.exports = {
   deploy,
   remove
+}
+
+function generateAppSettings({ name, storageConnectionString, nodeVersion }) {
+  return [
+    {
+      name: 'AzureWebJobsStorage',
+      value: storageConnectionString
+    },
+    {
+      name: 'FUNCTIONS_EXTENSION_VERSION',
+      value: 'beta'
+    },
+    {
+      name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING',
+      value: storageConnectionString
+    },
+    {
+      name: 'WEBSITE_CONTENTSHARE',
+      value: name.toLowerCase()
+    },
+    {
+      name: 'WEBSITE_NODE_DEFAULT_VERSION',
+      value: nodeVersion
+    },
+    {
+      name: 'WEBSITE_RUN_FROM_ZIP',
+      value: '1'
+    },
+    {
+      name: 'AzureWebJobsDashboard',
+      value: ''
+    }
+  ]
 }
