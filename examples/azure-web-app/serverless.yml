@@ -5,9 +5,11 @@ components:
   saveUser:
     type: azure-functions
     inputs:
+      name: func-${self.instanceId}
       runtime: nodejs8
-      subscriptionId: hello
-      resourceGroup: hello
+      subscriptionId: 80d4fe69-c95b-4dd2-a938-9250f1c8ab03
+      resourceGroup: jehollan-deletemecomponent2
       tenant: ${env.AZURE_TENANT}
-      clientId: ${env.AZURE_CLIENT_SECRET}
-      clientSecret: ${env.AZURE_CLIENT_ID}
+      clientId: ${env.AZURE_CLIENT_ID}
+      clientSecret: ${env.AZURE_CLIENT_SECRET}
+      root: ${self.path}/code

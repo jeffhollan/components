@@ -1,6 +1,8 @@
 const msRestAzure = require('ms-rest-azure')
 const { ResourceManagementClient } = require('azure-arm-resource')
 const StorageManagementClient = require('azure-arm-storage')
+const pack = require('./pack')
+const axios = require('axios')
 
 async function createFunction(
   {
@@ -9,18 +11,21 @@ async function createFunction(
     resourceGroup,
     tenant,
     clientId,
-    clientSecret /*, runtime, description, env, root */
+    clientSecret,
+    root /*, runtime, description, env */
   },
   context
 ) {
   context.log('Authenticating and creating clients...')
-  // const path = root || context.projectPath
-  // TODO: const pkg = await pack(path);
+
+  const path = root || context.projectPath
+  const pkg = await pack(path)
+
   const credentials = new msRestAzure.ApplicationTokenCredentials(clientId, tenant, clientSecret)
   const resourceClient = new ResourceManagementClient(credentials, subscriptionId)
   const storageClient = new StorageManagementClient(credentials, subscriptionId)
 
-  const storageAccountName = 'serverlessstorage1221'
+  const storageAccountName = 'serverlessstorage1222'
   const appServicePlanName = 'serverless-westus'
   const functionLocation = 'westus'
 
@@ -55,7 +60,6 @@ async function createFunction(
   context.log(`Creating storage account: ${storageAccountName}`)
   var storageParameters = {
     location: functionLocation,
-    kind: 'Storage',
     sku: {
       name: 'Standard_LRS'
     }
@@ -77,6 +81,8 @@ async function createFunction(
   )
   let storageKey = storageKeyResult.keys[0]
 
+  context.log(`Creating function app: ${name}`)
+
   var functionAppSettings = [
     {
       name: 'AzureWebJobsStorage',
@@ -93,35 +99,46 @@ async function createFunction(
   ]
   var functionAppParameters = {
     location: functionLocation,
+    kind: 'functionapp',
     properties: {
       serverFarmId: appServicePlanName,
       siteConfig: { appSettings: functionAppSettings }
-    },
-    Name: name
+    }
   }
 
-  context.log(`\nCreating function app: ${name}`)
+  let options = {
+    method: 'PUT',
+    url: `https://management.azure.com/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/providers/Microsoft.Web/sites/${name}?api-version=2016-08-01`,
+    body: functionAppParameters
+  }
 
-  let functionAppResult = await resourceClient.resources.createOrUpdate(
-    resourceGroup,
-    'Microsoft.Web',
-    '',
-    'sites',
-    name,
-    '2015-08-01',
-    functionAppParameters
-  )
+  await resourceClient.sendRequest(options)
 
-  return functionAppResult
+  options = {
+    method: 'POST',
+    url: `https://management.azure.com/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/providers/Microsoft.Web/sites/${name}/config/publishingcredentials/list?api-version=2016-08-01`,
+    body: null
+  }
+
+  let publishingCredentials = await resourceClient.sendRequest(options)
+
+  context.log(JSON.stringify(publishingCredentials))
+
+  let zipResponse = await axios.post(`https://${name}.scm.azurewebsites.net/api/zipdeploy`, pkg, {
+    auth: {
+      username: publishingCredentials.properties.publishingUserName,
+      password: publishingCredentials.properties.publishingPassword
+    }
+  })
+
+  context.log(JSON.stringify(zipResponse))
+
+  return {}
 }
 
 async function deploy(inputs, context) {
   // If name is not included, add it from config key
   if (!inputs.name) inputs.name = context.id.split(':')[1]
-
-  let outputs = {
-    functionUrl: 'https://jeff.azurewebsites.net'
-  }
 
   // az ad sp create-for-rbac -n "jehollan-serverlessframework" --role contributor  \
   // --scopes /subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de
@@ -131,11 +148,10 @@ async function deploy(inputs, context) {
   // TODO: do the decision tree on create or update (if necessary)
 
   context.log('about to call createFunction')
-  await createFunction(inputs, context)
+  let outputs = await createFunction(inputs, context)
 
   context.log('about to save state')
   context.saveState({ ...inputs, ...outputs })
-  return outputs
 }
 
 function remove(inputs, context) {

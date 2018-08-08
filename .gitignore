@@ -41,3 +41,4 @@ state.json
 tracking-config.json
 *.sample
 /coverage
+bin/components

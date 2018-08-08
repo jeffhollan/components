@@ -64,8 +64,3 @@ inputTypes:
     type: string
     displayName: Azure Tenant
     description: The Azure Tenant
-
-outputTypes:
-  functionUrl:
-    type: string
-    description: The URL of the Azure Function
