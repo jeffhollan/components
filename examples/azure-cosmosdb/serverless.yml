@@ -1,9 +1,9 @@
-type: azure-web-app
+type: azure-cosmosdb
 version: 0.0.1
 
 components:
-  myStorageAccount:
-    type: azure-storage-blob
+  myCosmosDb:
+    type: azure-cosmosdb
     inputs:
       subscriptionId: ${env.AZURE_SUBSCRIPTION_ID}
       tenant: ${env.AZURE_TENANT}

@@ -1,0 +1,69 @@
+type: azure-cosmosdb
+version: 0.0.1
+core: 0.2.x
+
+description: "Azure CosmosDB Serverless Component"
+license: MIT
+author: "Jeff Hollan <jehollan@microsoft.com> (https://azure.com/serverless)"
+repository: "github:serverless/components"
+
+inputTypes:
+  name:
+    type: string
+    displayName: Azure CosmosDB name
+    required: true
+    description: The Azure CosmosDB name
+    example: cosmos${self.instanceId}
+    default: cosmos${self.instanceId}
+  apiType:
+    type: string
+    displayName: CosmosDB API Type
+    description: API type to interact with CosmosDB
+    example: SQL
+    default: SQL
+  location:
+    type: string
+    required: true
+    displayName: Azure CosmosDB location
+    description: The region to deploy the CosmosDB
+    default: westus
+  resourceGroup:
+    type: string
+    required: true
+    default: serverless-rg
+    displayName: Resource group name
+    description: The functions resource group
+    example: serverless-rg
+  subscriptionId:
+    type: string
+    required: true
+    displayName: Subscription ID
+    description: The Azure subscription ID
+    example: 38ee4b45-d54e-451e-bdff-d08b951f32ae
+  description:
+    type: string
+    displayName: Azure CosmosDB description
+    description: |
+      A short, user-defined CosmosDB description.
+      Azure does not use this value. Assign a meaningful description as you see fit
+    example: The CosmosDB for serverless
+  clientId:
+    type: string
+    displayName: Azure Client ID
+    description: The Azure Client ID
+  clientSecret:
+    type: string
+    displayName: Azure Client Secret
+    description: The Azure Client Secret
+  tenant:
+    type: string
+    displayName: Azure Tenant
+    description: The Azure Tenant
+
+outputTypes:
+  name:
+    type: string
+    description: The name of the CosmosDB
+  key:
+    type: string
+    description: Access key
