@@ -9,6 +9,17 @@ async function createStorage(
   const credentials = new msRestAzure.ApplicationTokenCredentials(clientId, tenant, clientSecret)
   const storageClient = new StorageManagementClient(credentials, subscriptionId)
 
+  const rgComponent = await context.load('azure-rg', 'resourceGroup', {
+    name: resourceGroup,
+    subscriptionId,
+    tenant,
+    clientId,
+    clientSecret,
+    location
+  })
+
+  await rgComponent.deploy()
+
   context.log(`Creating storage account: ${name}`)
   let storageParameters = {
     location: location,
@@ -42,7 +53,6 @@ async function createStorage(
 
 async function deploy(inputs, context) {
   let outputs = await createStorage(inputs, context)
-  context.log(`Container created.`)
 
   context.saveState({ ...outputs })
   return outputs

@@ -26,11 +26,16 @@ async function createFunction(
   const credentials = new msRestAzure.ApplicationTokenCredentials(clientId, tenant, clientSecret)
   const resourceClient = new ResourceManagementClient(credentials, subscriptionId)
 
-  const groupParameters = { location: location, tags: { source: 'serverless-framework' } }
+  const rgComponent = await context.load('azure-rg', 'resourceGroup', {
+    name: resourceGroup,
+    subscriptionId,
+    tenant,
+    clientId,
+    clientSecret,
+    location
+  })
 
-  context.log('Creating resource group: ' + resourceGroup)
-
-  await resourceClient.resourceGroups.createOrUpdate(resourceGroup, groupParameters)
+  await rgComponent.deploy()
 
   const planParameters = {
     properties: {
@@ -58,7 +63,8 @@ async function createFunction(
     tenant,
     clientId,
     clientSecret,
-    resourceGroup
+    resourceGroup,
+    location
   })
 
   const storageAccount = await storageAccountComponent.deploy()
