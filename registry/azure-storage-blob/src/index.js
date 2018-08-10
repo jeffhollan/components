@@ -3,7 +3,7 @@ const StorageManagementClient = require('azure-arm-storage')
 const azureStorage = require('azure-storage')
 
 async function createStorage(
-  { name, container, subscriptionId, resourceGroup, tenant, clientId, clientSecret, location },
+  { name, blobContainer, subscriptionId, resourceGroup, tenant, clientId, clientSecret, location },
   context
 ) {
   const credentials = new msRestAzure.ApplicationTokenCredentials(clientId, tenant, clientSecret)
@@ -23,22 +23,29 @@ async function createStorage(
   let storageKeyResult = await storageClient.storageAccounts.listKeys(resourceGroup, name)
 
   let storageKey = storageKeyResult.keys[0].value
-  let storageConnectionString = `DefaultEndpointsProtocol=https;AccountName=${name};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
+  let connectionString = `DefaultEndpointsProtocol=https;AccountName=${name};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
 
-  let blobClient = azureStorage.createBlobService(storageConnectionString)
-  blobClient.createContainerIfNotExists(container, (err, result) => {
-    if (err) {
-      throw err
-    }
-    context.log(result)
-    return result
+  let blobClient = azureStorage.createBlobService(connectionString)
+
+  context.log(`Creating container: ${blobContainer}`)
+  return new Promise((resolve) => {
+    blobClient.createContainerIfNotExists(blobContainer, (err) => {
+      if (err) throw err
+      resolve({
+        name,
+        blobContainer,
+        connectionString
+      })
+    })
   })
 }
 
 async function deploy(inputs, context) {
   let outputs = await createStorage(inputs, context)
+  context.log(`Container created.`)
 
-  context.saveState({ ...inputs, ...outputs })
+  context.saveState({ ...outputs })
+  return outputs
 }
 
 function remove(inputs, context) {

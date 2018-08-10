@@ -13,9 +13,9 @@ inputTypes:
     displayName: Azure storage account name
     required: true
     description: The Azure storage account name
-    example: stor${self.instanceId}
-    default: stor${self.instanceId}
-  container:
+    example: stor${self.serviceId}
+    default: stor${self.serviceId}
+  blobContainer:
     type: string
     displayName: Azure storage container name
     required: true
@@ -59,3 +59,14 @@ inputTypes:
     type: string
     displayName: Azure Tenant
     description: The Azure Tenant
+
+outputTypes:
+  name:
+    type: string
+    description: The name of the storage account
+  blobContainer:
+    type: string
+    description: The blob container name
+  connectionString:
+    type: string
+    description: Connection string for the storage account
