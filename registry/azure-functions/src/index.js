@@ -1,6 +1,5 @@
 const msRestAzure = require('ms-rest-azure')
 const { ResourceManagementClient } = require('azure-arm-resource')
-const StorageManagementClient = require('azure-arm-storage')
 const pack = require('./pack')
 const axios = require('axios')
 
@@ -26,15 +25,14 @@ async function createFunction(
 
   const credentials = new msRestAzure.ApplicationTokenCredentials(clientId, tenant, clientSecret)
   const resourceClient = new ResourceManagementClient(credentials, subscriptionId)
-  const storageClient = new StorageManagementClient(credentials, subscriptionId)
 
-  var groupParameters = { location: location, tags: { source: 'serverless-framework' } }
+  const groupParameters = { location: location, tags: { source: 'serverless-framework' } }
 
   context.log('Creating resource group: ' + resourceGroup)
 
   await resourceClient.resourceGroups.createOrUpdate(resourceGroup, groupParameters)
 
-  var planParameters = {
+  const planParameters = {
     properties: {
       sku: 'Dynamic',
       computeMode: 'Dynamic',
@@ -54,42 +52,29 @@ async function createFunction(
     planParameters
   )
 
-  context.log(`Creating storage account: ${storageAccountName}`)
-  var storageParameters = {
-    location: location,
-    sku: {
-      name: 'Standard_LRS'
-    }
-  }
+  const storageAccountComponent = await context.load('azure-storage-blob', 'storageAccount', {
+    name: storageAccountName,
+    subscriptionId,
+    tenant,
+    clientId,
+    clientSecret,
+    resourceGroup
+  })
 
-  await resourceClient.resources.createOrUpdate(
-    resourceGroup,
-    'Microsoft.Storage',
-    '',
-    'storageAccounts',
-    storageAccountName,
-    '2018-02-01',
-    storageParameters
-  )
+  const storageAccount = await storageAccountComponent.deploy()
 
-  let storageKeyResult = await storageClient.storageAccounts.listKeys(
-    resourceGroup,
-    storageAccountName
-  )
-
-  let storageKey = storageKeyResult.keys[0].value
-  let storageConnectionString = `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
+  const storageConnectionString = storageAccount.connectionString
 
   context.log(`Creating function app: ${name}`)
 
-  var functionAppSettings = generateAppSettings({
+  const functionAppSettings = generateAppSettings({
     name,
     storageConnectionString,
     nodeVersion: runtime == 'nodejs10' ? '10.7.0' : '8.11.1',
     env
   })
 
-  var functionAppParameters = {
+  const functionAppParameters = {
     location: location,
     kind: 'functionapp',
     properties: {
@@ -112,7 +97,7 @@ async function createFunction(
     body: null
   }
 
-  let publishingCredentials = await resourceClient.sendRequest(options)
+  const publishingCredentials = await resourceClient.sendRequest(options)
 
   context.log(`Publishing function code...`)
 
