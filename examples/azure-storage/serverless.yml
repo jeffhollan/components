@@ -1,0 +1,12 @@
+type: azure-web-app
+version: 0.0.1
+
+components:
+  myStorageAccount:
+    type: azure-storage-blob
+    inputs:
+      subscriptionId: ${env.AZURE_SUBSCRIPTION_ID}
+      tenant: ${env.AZURE_TENANT}
+      clientId: ${env.AZURE_CLIENT_ID}
+      clientSecret: ${env.AZURE_CLIENT_SECRET}
+

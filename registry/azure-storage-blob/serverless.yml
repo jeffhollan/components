@@ -1,0 +1,61 @@
+type: azure-storage-blob
+version: 0.0.1
+core: 0.2.x
+
+description: "Azure Storage Blob Serverless Component"
+license: MIT
+author: "Jeff Hollan <jehollan@microsoft.com> (https://azure.com/serverless)"
+repository: "github:serverless/components"
+
+inputTypes:
+  name:
+    type: string
+    displayName: Azure storage account name
+    required: true
+    description: The Azure storage account name
+    example: stor${self.instanceId}
+    default: stor${self.instanceId}
+  container:
+    type: string
+    displayName: Azure storage container name
+    required: true
+    description: The Azure storage container name
+    example: contents
+    default: contents
+  location:
+    type: string
+    displayName: Azure storage location
+    description: The region to deploy the storage account
+    default: westus
+  resourceGroup:
+    type: string
+    required: true
+    default: serverless-rg
+    displayName: Resource group name
+    description: The functions resource group
+    example: serverless-rg
+  subscriptionId:
+    type: string
+    required: true
+    displayName: Subscription ID
+    description: The Azure subscription ID
+    example: 38ee4b45-d54e-451e-bdff-d08b951f32ae
+  description:
+    type: string
+    displayName: Azure storage blob description
+    description: |
+      A short, user-defined storage blob description.
+      Azure does not use this value. Assign a meaningful description as you see fit
+    example: The blob is for web contents
+  clientId:
+    type: string
+    displayName: Azure Client ID
+    description: The Azure Client ID
+  clientSecret:
+    type: string
+    displayName: Azure Client Secret
+    description: The Azure Client Secret
+  tenant:
+    type: string
+    displayName: Azure Tenant
+    description: The Azure Tenant
